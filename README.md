@@ -1,2 +1,1 @@
-# CTF
-Writeup CTF by Van Hieu Nguyen
+# Writeup CTF by Van Hieu Nguyen
