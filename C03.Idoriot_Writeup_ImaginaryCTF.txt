@@ -6,4 +6,73 @@ IDORIOT
 
     [-] When we connect to http://idoriot.chal.imaginaryctf.org/, we can see the login page. Looks like nothing.
 
-    
+        [+] Try to login with some account. 
+
+            [!] Incorrect 
+
+    [-] I checked source code of web but I can't see anything else. 
+
+[*] Okay, I see the "register" and I'm thinking about vulnerabilites of web. 
+
+    [-] It's Broken Authentications
+
+    [-] We access to http://idoriot.chal.imaginaryctf.org/register.php
+
+        [+] Create a new account with space in start username 
+
+        [+] I created this account:
+
+            username:  idiot
+            password: 123
+
+        [+] After register, this website took me to a place like this: 
+
+.....................................................................................................................................
+Welcome, User ID: 87946035
+Source Code
+<?php
+
+session_start();
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Check if session is expired
+if (time() > $_SESSION['expires']) {
+    header("Location: logout.php");
+    exit();
+}
+
+// Display user ID on landing page
+echo "Welcome, User ID: " . urlencode($_SESSION['user_id']);
+
+// Get the user for admin
+$db = new PDO('sqlite:memory:');
+$admin = $db->query('SELECT * FROM users WHERE user_id = 0 LIMIT 1')->fetch();
+
+// Check if the user is admin
+if ($admin['user_id'] === $_SESSION['user_id']) {
+    // Read the flag from flag.txt
+    $flag = file_get_contents('flag.txt');
+    echo "<h1>Flag</h1>";
+    echo "<p>$flag</p>";
+} else {
+    // Display the source code for this file
+    echo "<h1>Source Code</h1>";
+    highlight_file(__FILE__);
+}
+
+?>
+.....................................................................................................................................
+
+[*] Look in here and we can see filename "flag.txt" 
+
+    [+] Try to cat that file by url 
+
+        http://idoriot.chal.imaginaryctf.org/flag.txt
+
+    [!] Flag is: ictf{1ns3cure_direct_object_reference_from_hidden_post_param_i_guess}
+
