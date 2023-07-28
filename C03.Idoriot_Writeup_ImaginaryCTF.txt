@@ -1,0 +1,9 @@
+IDORIOT 
+
+[*] Some idiot made this web site that you can log in to. The idiot even made it in php. I dunno.
+
+[*] Target: http://idoriot.chal.imaginaryctf.org/
+
+    [-] When we connect to http://idoriot.chal.imaginaryctf.org/, we can see the login page. Looks like nothing.
+
+    
